@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 3em;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #444;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            display: block;
+            color: #555;
+        }
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, input[type="date"]:focus, input[type="file"]:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #ccc;
+            margin-bottom: 15px;
+            object-fit: cover;
+        }
+        .hidden {
+            display: none;
+        }
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+            margin-top: 30px;
+        }
+        select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1.2em;
+            width: 100%;
+            background-color: #fff;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fitness Tracker</h1>
+    <div id="loginContainer" class="container">
+        <h2>Inloggen</h2>
+        <div class="form-group">
+            <label for="username">Gebruikersnaam:</label>
+            <input type="text" id="username" placeholder="Voer gebruikersnaam in">
+        </div>
+        <div class="form-group">
+            <label for="password">Wachtwoord:</label>
+            <input type="password" id="password" placeholder="Voer wachtwoord in">
+        </div>
+        <button onclick="login()">Inloggen</button>
+        <p>Heb je nog geen account? <a href="javascript:void(0);" onclick="showSignupForm()">Maak een account aan</a></p>
+        <button onclick="resetDatabase()">Reset Database</button>
+    </div>
+
+    <div id="signupContainer" class="container hidden">
+        <h2>Account Aanmaken</h2>
+        <div class="form-group">
+            <label for="newUsername">Gebruikersnaam:</label>
+            <input type="text" id="newUsername" placeholder="Voer gebruikersnaam in">
+        </div>
+        <div class="form-group">
+            <label for="newPassword">Wachtwoord:</label>
+            <input type="password" id="newPassword" placeholder="Voer wachtwoord in">
+        </div>
+        <div class="form-group">
+            <label for="newProfilePhoto">Profielfoto:</label>
+            <input type="file" id="newProfilePhoto">
+        </div>
+        <button onclick="signup()">Account Aanmaken</button>
+        <p>Heb je al een account? <a href="javascript:void(0);" onclick="showLoginForm()">Inloggen</a></p>
+    </div>
+
+    <div id="trackerContainer" class="container hidden">
+        <h2>Voeg je gegevens toe, <span id="currentUserName"></span></h2>
+        <div class="profile-container">
+            <img id="profilePhoto" class="profile-photo" src="" alt="Profielfoto">
+        </div>
+
+        <div class="form-group">
+            <label for="mealName">Maaltijdnaam:</label>
+            <input type="text" id="mealName" placeholder="Voer de naam van de maaltijd in">
+        </div>
+
+        <div class="form-group">
+            <label for="calories">Calorieën:</label>
+            <input type="number" id="calories" placeholder="Aantal calorieën">
+        </div>
+
+        <div class="form-group">
+            <label for="mealDate">Datum:</label>
+            <input type="date" id="mealDate">
+        </div>
+
+        <button onclick="addMeal()">Maaltijd Toevoegen</button>
+
+        <div class="form-group">
+            <label for="pushups">Push-ups:</label>
+            <input type="number" id="pushups" placeholder="Aantal push-ups">
+        </div>
+
+        <div class="form-group">
+            <label for="situps">Sit-ups:</label>
+            <input type="number" id="situps" placeholder="Aantal sit-ups">
+        </div>
+
+        <div class="form-group">
+            <label for="planks">Planks (in seconden):</label>
+            <input type="number" id="planks" placeholder="Aantal seconden planks">
+        </div>
+
+        <div class="form-group">
+            <label for="exerciseDate">Datum (voor oefeningen):</label>
+            <input type="date" id="exerciseDate">
+        </div>
+
+        <button onclick="addExercise()">Oefeningen Toevoegen</button>
+
+        <div class="form-group">
+            <label for="runningDistance">Hardloop Afstand (km):</label>
+            <input type="number" id="runningDistance" placeholder="Afstand in kilometers">
+        </div>
+
+        <div class="form-group">
+            <label for="runningTime">Hardloop Tijd (minuten):</label>
+            <input type="number" id="runningTime" placeholder="Tijd in minuten">
+        </div>
+
+        <div class="form-group">
+            <label for="runningDate">Datum (hardloop):</label>
+            <input type="date" id="runningDate">
+        </div>
+
+        <button onclick="addRunningData()">Hardloop Gegevens Toevoegen</button>
+
+        <div class="form-group">
+            <label for="weight">Gewicht (kg):</label>
+            <input type="number" id="weight" placeholder="Voer je gewicht in">
+        </div>
+
+        <div class="form-group">
+            <label for="weightDate">Datum (gewicht):</label>
+            <input type="date" id="weightDate">
+        </div>
+
+        <button onclick="addWeightData()">Gewicht Gegevens Toevoegen</button>
+
+        <h3>Calorieën, Oefeningen, Hardloop en Gewicht Grafieken</h3>
+        <label for="timeRange">Tijdsperiode:</label>
+        <select id="timeRange" onchange="updateCharts()">
+            <option value="1">Vandaag</option>
+            <option value="7">Deze week</option>
+            <option value="30">Deze maand</option>
+            <option value="180">Laatste 6 maanden</option>
+        </select>
+        <canvas id="caloriesChart"></canvas>
+        <canvas id="exercisesChart"></canvas>
+        <canvas id="runningChart"></canvas>
+        <canvas id="weightChart"></canvas>
+    </div>
+
+    <script>
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let currentUser = null;
+
+        function showSignupForm() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('signupContainer').classList.remove('hidden');
+        }
+
+        function showLoginForm() {
+            document.getElementById('signupContainer').classList.add('hidden');
+            document.getElementById('loginContainer').classList.remove('hidden');
+        }
+
+        function resetDatabase() {
+            localStorage.removeItem('users');
+            alert('Database is gereset.');
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                document.getElementById('currentUserName').textContent = username;
+                document.getElementById('profilePhoto').src = users[username].profilePhoto || '';
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('trackerContainer').classList.remove('hidden');
+                updateCharts();
+            } else {
+                alert('Ongeldige gebruikersnaam of wachtwoord');
+            }
+        }
+
+        function signup() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const profilePhoto = document.getElementById('newProfilePhoto').files[0];
+
+            if (username && password) {
+                users[username] = {
+                    password,
+                    meals: [],
+                    exercises: [],
+                    running: [],
+                    weights: [],
+                    profilePhoto: profilePhoto ? URL.createObjectURL(profilePhoto) : ''
+                };
+                localStorage.setItem('users', JSON.stringify(users));
+                alert('Account aangemaakt!');
+                showLoginForm();
+            } else {
+                alert('Vul alle velden in!');
+            }
+        }
+
+        function updateCharts() {
+            const timeRange = parseInt(document.getElementById('timeRange').value);
+            const currentDate = new Date();
+            const labels = [];
+            const caloriesData = [];
+            const exerciseData = [];
+            const runningData = [];
+            const weightData = [];
+
+            function filterData(data, type) {
+                return data.filter(item => {
+                    const date = new Date(item.date);
+                    return (currentDate - date) / (1000 * 3600 * 24) <= timeRange;
+                }).map(item => {
+                    if (type === 'calories') return item.calories;
+                    if (type === 'exercise') return item.pushups + item.situps; // Combine pushups and situps
+                    if (type === 'running') return item.distance;
+                    if (type === 'weight') return item.weight;
+                });
+            }
+
+            // Filter and push data for the charts
+            if (users[currentUser].meals.length > 0) {
+                const meals = filterData(users[currentUser].meals, 'calories');
+                meals.forEach(item => caloriesData.push(item));
+            }
+
+            if (users[currentUser].exercises.length > 0) {
+                const exercises = filterData(users[currentUser].exercises, 'exercise');
+                exercises.forEach(item => exerciseData.push(item));
+            }
+
+            if (users[currentUser].running.length > 0) {
+                const running = filterData(users[currentUser].running, 'running');
+                running.forEach(item => runningData.push(item));
+            }
+
+            if (users[currentUser].weights.length > 0) {
+                const weights = filterData(users[currentUser].weights, 'weight');
+                weights.forEach(item => weightData.push(item));
+            }
+
+            // Labels should match the filtered data length
+            labels.length = Math.max(caloriesData.length, exerciseData.length, runningData.length, weightData.length);
+
+            // Calories Chart
+            if (caloriesData.length > 0) {
+                new Chart(document.getElementById('caloriesChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Calorieën',
+                            data: caloriesData,
+                            borderColor: '#f43f5e',
+                            fill: false
+                        }]
+                    }
+                });
+            }
+
+            // Exercises Chart
+            if (exerciseData.length > 0) {
+                new Chart(document.getElementById('exercisesChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Oefeningen',
+                            data: exerciseData,
+                            backgroundColor: '#34d399'
+                        }]
+                    }
+                });
+            }
+
+            // Running Chart
+            if (runningData.length > 0) {
+                new Chart(document.getElementById('runningChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Afstand (km)',
+                            data: runningData,
+                            borderColor: '#60a5fa',
+                            fill: false
+                        }]
+                    }
+                });
+            }
+
+            // Weight Chart
+            if (weightData.length > 0) {
+                new Chart(document.getElementById('weightChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Gewicht (kg)',
+                            data: weightData,
+                            borderColor: '#10b981',
+                            fill: false
+                        }]
+                    }
+                });
+            }
+        }
+
+        function addMeal() {
+            const mealName = document.getElementById('mealName').value;
+            const calories = document.getElementById('calories').value;
+            const mealDate = document.getElementById('mealDate').value;
+
+            if (mealName && calories && mealDate) {
+                if (!users[currentUser].meals) {
+                    users[currentUser].meals = [];
+                }
+                users[currentUser].meals.push({
+                    mealName,
+                    calories: parseInt(calories),
+                    date: mealDate
+                });
+                localStorage.setItem('users', JSON.stringify(users));
+                updateCharts();
+            } else {
+                alert('Vul alle velden in voor de maaltijd!');
+            }
+        }
+
+        function addExercise() {
+            const pushups = document.getElementById('pushups').value;
+            const situps = document.getElementById('situps').value;
+            const planks = document.getElementById('planks').value;
+            const exerciseDate = document.getElementById('exerciseDate').value;
+
+            if (pushups && situps && planks && exerciseDate) {
+                if (!users[currentUser].exercises) {
+                    users[currentUser].exercises = [];
+                }
+                users[currentUser].exercises.push({
+                    pushups: parseInt(pushups),
+                    situps: parseInt(situps),
+                    planks: parseInt(planks),
+                    date: exerciseDate
+                });
+                localStorage.setItem('users', JSON.stringify(users));
+                updateCharts();
+            } else {
+                alert('Vul alle velden in voor oefeningen!');
+            }
+        }
+
+        function addRunningData() {
+            const runningDistance = document.getElementById('runningDistance').value;
+            const runningTime = document.getElementById('runningTime').value;
+            const runningDate = document.getElementById('runningDate').value;
+
+            if (runningDistance && runningTime && runningDate) {
+                if (!users[currentUser].running) {
+                    users[currentUser].running = [];
+                }
+                users[currentUser].running.push({
+                    distance: parseFloat(runningDistance),
+                    time: parseInt(runningTime),
+                    date: runningDate
+                });
+                localStorage.setItem('users', JSON.stringify(users));
+                updateCharts();
+            } else {
+                alert('Vul alle velden in voor hardloopgegevens!');
+            }
+        }
+
+        function addWeightData() {
+            const weight = document.getElementById('weight').value;
+            const weightDate = document.getElementById('weightDate').value;
+
+            if (weight && weightDate) {
+                if (!users[currentUser].weights) {
+                    users[currentUser].weights = [];
+                }
+                users[currentUser].weights.push({
+                    weight: parseFloat(weight),
+                    date: weightDate
+                });
+                localStorage.setItem('users', JSON.stringify(users));
+                updateCharts();
+            } else {
+                alert('Vul alle velden in voor gewicht!');
+            }
+        }
+    </script>
+</body>
+</html>
